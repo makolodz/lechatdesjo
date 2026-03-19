@@ -22,13 +22,15 @@ function afficherQuestion(data) {
 
     // Configure chaque bouton avec une option de réponse
     data.options.forEach((option, index) => {
-        boutons[index].innerText = option;
-        boutons[index].style.display = "block"; // Assure qu'ils sont visibles
+        if (boutons[index]) {
+            boutons[index].innerText = option;
+            boutons[index].style.display = "block"; // Assure qu'ils sont visibles
 
-        // vérifie la réponse au clic
-        boutons[index].onclick = () => {
-            verifierReponse(option, data.answer);
-        };
+            // vérifie la réponse au clic
+            boutons[index].onclick = () => {
+                verifierReponse(option, data.answer);
+            };
+        }
     });
 }
 
@@ -36,7 +38,8 @@ function verifierReponse(choix, bonneReponse) {
     const questionP = document.getElementById('question-div').querySelector('p');
     const boutons = document.getElementById('question-div').querySelectorAll('button');
 
-    if (choix === bonneReponse) {
+    // Vérifie si le choix commence par la bonne lettre (ex: "B" ou "B. Athènes")
+    if (choix.trim().startsWith(bonneReponse)) {
         alert("Bonne réponse !");
         score++;
         // Mise à jour de l'affichage du score (ex: 1/5)
@@ -51,7 +54,10 @@ function verifierReponse(choix, bonneReponse) {
 
     // Réinitialise l'affichage pour le prochain tour
     questionP.innerText = "Lancez les dés pour une nouvelle question";
-    boutons.forEach(btn => btn.innerText = "...");
+    boutons.forEach(btn => {
+        btn.innerText = "...";
+        btn.onclick = null;
+    });
 
     // Save la progression
     sauvegarderPartie();
@@ -60,8 +66,10 @@ function verifierReponse(choix, bonneReponse) {
 // Local storage
 
 function sauvegarderPartie() {
+    // Vérifie si playerPosition est accessible
+    const pos = (typeof playerPosition !== 'undefined') ? playerPosition : 0;
     const etatJeu = {
-        position: playerPosition, // Variable venant de canvas.js
+        position: pos, // Variable venant de canvas.js
         score: score
     };
     localStorage.setItem('sauvegardeJO', JSON.stringify(etatJeu));
@@ -71,7 +79,7 @@ function chargerPartie() {
     const sauvegarde = localStorage.getItem('sauvegardeJO');
     if (sauvegarde) {
         const etat = JSON.parse(sauvegarde);
-        playerPosition = etat.position;
+        if (typeof playerPosition !== 'undefined') playerPosition = etat.position;
         score = etat.score;
 
         // Mise à jour visuelle
@@ -96,7 +104,7 @@ async function gererArriveeSurCase(couleurCase) {
     try {
         const questionRecue = await fetchQuestion(themeChoisi);
         // Affiche la question
-        afficherQuestion(questionRecue);
+        if (questionRecue) afficherQuestion(questionRecue);
     } catch (error) {
         console.error("Erreur lors de la récupération :", error);
         document.getElementById('question-div').querySelector('p').innerText = "Erreur de connexion à l'IA.";
@@ -117,7 +125,7 @@ async function fetchQuestion(thematique) {
             messages: [
                 {
                     role: "user",
-                    content: `Génère une question de quiz sur les JO pour la thématique : ${thematique}. 
+                    content: `Génère une question de quiz sur les JO d'hiver pour la thématique : ${thematique}. 
                               Donne 4 options de réponse et précise la bonne (juste la lettre A, B, C ou D). 
                               Réponds uniquement au format JSON : 
                               {"question": "...", "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "answer": "..."}`
@@ -125,6 +133,8 @@ async function fetchQuestion(thematique) {
             ]
         })
     });
+
+    if (!response.ok) throw new Error("Erreur HTTP: " + response.status);
 
     const data = await response.json();
     let content = data.choices[0].message.content;
