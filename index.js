@@ -1,4 +1,6 @@
-// Liaison thèmes par couleur : 
+// État du jeu (Score et suivi des anneaux)
+let score = 0;
+let anneauxGagnes = [];
 
 const themesParCouleur = {
     "blue": "Histoire des Jeux Olympiques",
@@ -8,7 +10,78 @@ const themesParCouleur = {
     "cyan": "Défis technologiques et controverses"
 };
 
-// Liaison couleur case et API
+// UI
+
+function afficherQuestion(data) {
+    const questionDiv = document.getElementById('question-div');
+    const questionP = questionDiv.querySelector('p');
+    const boutons = questionDiv.querySelectorAll('button');
+
+    // Affiche la question
+    questionP.innerText = data.question;
+
+    // Configure chaque bouton avec une option de réponse
+    data.options.forEach((option, index) => {
+        boutons[index].innerText = option;
+        boutons[index].style.display = "block"; // Assure qu'ils sont visibles
+
+        // vérifie la réponse au clic
+        boutons[index].onclick = () => {
+            verifierReponse(option, data.answer);
+        };
+    });
+}
+
+function verifierReponse(choix, bonneReponse) {
+    const questionP = document.getElementById('question-div').querySelector('p');
+    const boutons = document.getElementById('question-div').querySelectorAll('button');
+
+    if (choix === bonneReponse) {
+        alert("Bonne réponse !");
+        score++;
+        // Mise à jour de l'affichage du score (ex: 1/5)
+        document.querySelector('#aside div span').innerText = `${score}/5`;
+
+        if (score >= 5) {
+            alert("Félicitations ! Vous avez collecté les 5 anneaux olympiques !");
+        }
+    } else {
+        alert("Dommage ! La réponse était : " + bonneReponse);
+    }
+
+    // Réinitialise l'affichage pour le prochain tour
+    questionP.innerText = "Lancez les dés pour une nouvelle question";
+    boutons.forEach(btn => btn.innerText = "...");
+
+    // Save la progression
+    sauvegarderPartie();
+}
+
+// Local storage
+
+function sauvegarderPartie() {
+    const etatJeu = {
+        position: playerPosition, // Variable venant de canvas.js
+        score: score
+    };
+    localStorage.setItem('sauvegardeJO', JSON.stringify(etatJeu));
+}
+
+function chargerPartie() {
+    const sauvegarde = localStorage.getItem('sauvegardeJO');
+    if (sauvegarde) {
+        const etat = JSON.parse(sauvegarde);
+        playerPosition = etat.position;
+        score = etat.score;
+
+        // Mise à jour visuelle
+        document.querySelector('#aside div span').innerText = `${score}/5`;
+        if (typeof redrawAll === "function") redrawAll();
+        console.log("Partie chargée !");
+    }
+}
+
+// QUESTION API
 
 async function gererArriveeSurCase(couleurCase) {
     const themeChoisi = themesParCouleur[couleurCase];
@@ -18,19 +91,17 @@ async function gererArriveeSurCase(couleurCase) {
         return;
     }
 
-    console.log("Thème envoyé à l'IA:", themeChoisi);
-
-    // Appel de la fonction fetchQuestion avec thème
+    document.getElementById('question-div').querySelector('p').innerText = "Chargement...";
 
     try {
         const questionRecue = await fetchQuestion(themeChoisi);
-        console.log("Question reçue :", questionRecue)
+        // Affiche la question
+        afficherQuestion(questionRecue);
     } catch (error) {
         console.error("Erreur lors de la récupération :", error);
+        document.getElementById('question-div').querySelector('p').innerText = "Erreur de connexion à l'IA.";
     }
 }
-
-/* API Mistral Questions */
 
 async function fetchQuestion(thematique) {
     const apiKey = "bi0q8Sg1uTbNVtbn6zrKjCLcf63Bl1G1";
@@ -47,27 +118,30 @@ async function fetchQuestion(thematique) {
                 {
                     role: "user",
                     content: `Génère une question de quiz sur les JO pour la thématique : ${thematique}. 
-                              Donne 4 options de réponse et précise la bonne. 
+                              Donne 4 options de réponse et précise la bonne (juste la lettre A, B, C ou D). 
                               Réponds uniquement au format JSON : 
-                              {"question": "...", "options": ["A", "B", "C", "D"], "answer": "..."}`
+                              {"question": "...", "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "answer": "..."}`
                 }
             ]
         })
     });
+
     const data = await response.json();
     let content = data.choices[0].message.content;
 
-    return JSON.parse(content)
+    // Eviter les '''json
+    const firstBracket = content.indexOf('{');
+    const lastBracket = content.lastIndexOf('}');
+    content = content.substring(firstBracket, lastBracket + 1);
+
+    return JSON.parse(content);
 }
 
 function init() {
     console.log("Système de quiz initialisé.");
-
+    chargerPartie(); // Tente de charger une ancienne partie au démarrage
 }
 
-document.addEventListener("DOMContentLoaded", init)
+document.addEventListener("DOMContentLoaded", init);
 
-// API : 
-
-
-
+// API : Sécurité anti-crash
