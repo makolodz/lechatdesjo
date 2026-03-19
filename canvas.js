@@ -1,3 +1,5 @@
+let button;
+
 let canvas;
 let ctx;
 
@@ -22,6 +24,12 @@ let totalLength;
 let questions = [];
 let avancements = [];
 let avancement = 0;
+
+let step;
+let totalSteps = 100;
+let animstate = 0;
+
+let img = new Image();
 
 function generateQuestions() {
 
@@ -166,30 +174,61 @@ function canvaDraw() {
 }
 
 function drawPawn() {
-    // charger l'image
-    const img = new Image();
-    img.src = "./pawn.png";
-
-    // trouver les cords
-    console.log(avancement, avancements);
-
-
     img.onload = () => {
         ctx.drawImage(img, avancements[avancement][0] - 45, avancements[avancement][1] - 45, 90, 90);
     };
 };
 
+function drawAnim() {
+    startX = avancements[avancement][0];
+    startY = avancements[avancement][1];
+    endX = avancements[avancement + 1][0];
+    endY = avancements[avancement + 1][1];
+    step = 0;
+
+    animatePawn();
+}
+
+function animatePawn() {
+    if (step <= totalSteps) {
+        // Effacer le canvas ou redessiner le plateau
+        redrawAll();
+
+        // Calculer la position actuelle du pion
+        const x = startX + ((endX - startX) * step / totalSteps);
+        const y = startY + ((endY - startY) * step / totalSteps);
+
+        console.log(x, y)
+
+        // Dessiner l'image
+        ctx.drawImage(img, x - 45, y - 45, 90, 90);
+
+        step++;
+        requestAnimationFrame(animatePawn); // prochaine frame
+    } else {
+        avancement++; // passer à la case suivante si besoin
+    }
+}
+
 function questionAnswered() {
-    redrawAll();
+    drawAnim();
 }
 
 function redrawAll() {
+    ctx.clearRect(0,0, canvas.width, canvas.height);
+
     drawIceRink();
     drawCircles();
     drawPawn();
 }
 
 function init() {
+
+    img.src = "./pawn.png"; // charger une fois
+
+    button =  document.getElementById("dice-roll");
+
+    button.addEventListener("click", drawAnim);
 
     generateQuestions();
 
