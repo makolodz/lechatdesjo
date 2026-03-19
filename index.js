@@ -1,12 +1,34 @@
+// Liaison thèmes par couleur : 
 
+const themesParCouleur = {
+    "blue": "Histoire des Jeux Olympiques",
+    "green": "Disciplines et Épreuves",
+    "red": "Athlètes Légendaires",
+    "pink": "Impact Social et Culturel",
+    "cyan": "Défis technologiques et controverses"
+};
 
+// Liaison couleur case et API
 
-function init() {
+async function gererArriveeSurCase(couleurCase) {
+    const themeChoisi = themesParCouleur[couleurCase];
 
+    if (!themeChoisi) {
+        console.error("Couleur inconnue par le jeu :", couleurCase);
+        return;
+    }
+
+    console.log("Thème envoyé à l'IA:", themeChoisi);
+
+    // Appel de la fonction fetchQuestion avec thème
+
+    try {
+        const questionRecue = await fetchQuestion(themeChoisi);
+        console.log("Question reçue :", questionRecue)
+    } catch (error) {
+        console.error("Erreur lors de la récupération :", error);
+    }
 }
-
-document.addEventListener("DOMContentLoaded", init())
-
 
 /* API Mistral Questions */
 
@@ -33,10 +55,19 @@ async function fetchQuestion(thematique) {
         })
     });
     const data = await response.json();
-    return JSON.parse(data.choices[0].message.content);
+    let content = data.choices[0].message.content;
+
+    return JSON.parse(content)
 }
 
-// API : Partie sécurité anti crash
+function init() {
+    console.log("Système de quiz initialisé.");
+
+}
+
+document.addEventListener("DOMContentLoaded", init)
+
+// API : 
 
 
 
