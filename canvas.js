@@ -1,3 +1,4 @@
+let button;
 let canvas;
 let ctx;
 
@@ -19,7 +20,12 @@ let arcLength;
 let totalLength;
 
 let questions = [];
+let avancements = [];
 
+let step;
+let totalSteps = 100;
+
+let img = new Image();
 let playerPosition = 0;
 const pionRadius = 15;
 
@@ -99,7 +105,7 @@ function getPointOnTrack(t) {
         const y = centerY + arcRadius * Math.sin(angle);
         return { x, y };
     }
-    d -= straightLength; // Note: Correction logique ici pour la soustraction correcte du segment précédent
+    
     d = (t % totalLength) - straightLength - arcLength;
 
     if (d <= straightLength) {
@@ -107,6 +113,7 @@ function getPointOnTrack(t) {
         const y = yBottom;
         return { x, y };
     }
+    
     d = (t % totalLength) - (2 * straightLength + arcLength);
 
     const angle = Math.PI / 2 + (d / arcLength) * Math.PI;
@@ -119,6 +126,9 @@ function drawCircles() {
     for (let i = 0; i < nbCercles; i++) {
         const t = (i / nbCercles) * totalLength;
         const { x, y } = getPointOnTrack(t);
+        
+        avancements[i] = [x, y];
+
         ctx.beginPath();
         ctx.arc(x, y, circleRadius, 0, 2 * Math.PI);
         ctx.fillStyle = questions[i];
@@ -126,27 +136,41 @@ function drawCircles() {
     }
 }
 
+function drawPawn() {
+    if (avancements[playerPosition]) {
+        ctx.drawImage(img, avancements[playerPosition][0] - 45, avancements[playerPosition][1] - 45, 90, 90);
+    }
+}
+
 function redrawAll() {
     drawIceRink();
     drawCircles();
-    drawPlayer();
+    drawPawn();
 }
 
 function init() {
+    img.src = "./pawn.png"; 
+
     generateQuestions();
     canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
 
     resizeCanvas();
-    redrawAll();
+    
+    img.onload = () => {
+        redrawAll();
+    };
 
     const diceBtn = document.getElementById('dice-roll');
 
     diceBtn.addEventListener('click', () => {
         const de = Math.floor(Math.random() * 6) + 1;
-        alert("Tu as fait " + de + " !");
+        alert("Tu as fait un " + de + " !");
+        
         playerPosition = (playerPosition + de) % nbCercles;
+        
         redrawAll();
+        
         const couleurCase = questions[playerPosition];
         gererArriveeSurCase(couleurCase);
     });
@@ -155,21 +179,6 @@ function init() {
         resizeCanvas();
         redrawAll();
     });
-}
-
-function drawPlayer() {
-    const t = (playerPosition / nbCercles) * totalLength;
-    const { x, y } = getPointOnTrack(t);
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(x, y, pionRadius, 0, 2 * Math.PI);
-    ctx.fillStyle = "black";
-    ctx.fill();
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    ctx.restore();
 }
 
 document.addEventListener("DOMContentLoaded", init);
