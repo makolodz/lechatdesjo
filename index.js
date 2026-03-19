@@ -117,7 +117,7 @@ async function fetchQuestion(thematique) {
             messages: [
                 {
                     role: "user",
-                    content: `Génère une question de quiz sur les JO pour la thématique : ${thematique}. 
+                    content: `Génère une question de quiz sur les JO d'Hiver pour la thématique : ${thematique}. 
                               Donne 4 options de réponse et précise la bonne (juste la lettre A, B, C ou D). 
                               Réponds uniquement au format JSON : 
                               {"question": "...", "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "answer": "..."}`
