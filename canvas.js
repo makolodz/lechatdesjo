@@ -20,6 +20,8 @@ let arcLength;
 let totalLength;
 
 let questions = [];
+let avancements = [];
+let avancement = 0;
 
 function generateQuestions() {
 
@@ -144,6 +146,7 @@ function drawCircles() {
 
         const t = (i / nbCercles) * totalLength; // distance le long de la piste
         const { x, y } = getPointOnTrack(t);
+        avancements[i] = [x, y];
 
         ctx.beginPath();
         ctx.arc(x, y, circleRadius, 0, 2 * Math.PI);
@@ -162,9 +165,28 @@ function canvaDraw() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
+function drawPawn() {
+    // charger l'image
+    const img = new Image();
+    img.src = "./pawn.png";
+
+    // trouver les cords
+    console.log(avancement, avancements);
+
+
+    img.onload = () => {
+        ctx.drawImage(img, avancements[avancement][0] - 45, avancements[avancement][1] - 45, 90, 90);
+    };
+};
+
+function questionAnswered() {
+    redrawAll();
+}
+
 function redrawAll() {
     drawIceRink();
     drawCircles();
+    drawPawn();
 }
 
 function init() {
