@@ -4,10 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="./style.css">
 </head>
-<body>
-    
-
+<body id="wrapper">
+    <aside id="aside">
+        <div>
+            <h1>Oval speed questions</h1>
+            <div>Joueur 1<span>0/5</span></div>
+        </div>
+        <div id="question-div">
+            <p>question</p>
+            <button type="button">réponse 1</button>
+            <button type="button">réponse 2</button>
+            <button type="button">réponse 3</button>
+            <button type="button">réponse 4</button>
+        </div>
+        <button type="button" id="dice-roll">lancer les dés</button>
+    </aside>
+    <main id="main">
+        <canvas width="" height="" id="canvas">
+        </canvas>
+    </main>
     <script src="./index.js"></script>
+    <script src="./canvas.js"></script>
 </body>
 </html>
