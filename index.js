@@ -14,7 +14,6 @@ function genererCasesAnneaux(nombreTotalCases) {
     casesAnneaux = {};
     const couleurs = Object.keys(themesParCouleur);
     const indicesDisponibles = Array.from({ length: nombreTotalCases }, (_, i) => i);
-
     couleurs.forEach(couleur => {
         const rand = Math.floor(Math.random() * indicesDisponibles.length);
         const indexCase = indicesDisponibles.splice(rand, 1)[0];
@@ -26,13 +25,10 @@ function afficherQuestion(data, couleurCase) {
     const questionDiv = document.getElementById('question-div');
     const questionP = questionDiv.querySelector('p');
     const boutons = questionDiv.querySelectorAll('button');
-
     questionP.innerText = data.question;
-
     data.options.forEach((option, index) => {
         boutons[index].innerText = option;
         boutons[index].style.display = "block";
-
         boutons[index].onclick = () => {
             verifierReponse(option, data.answer, couleurCase);
         };
@@ -42,20 +38,23 @@ function afficherQuestion(data, couleurCase) {
 function verifierReponse(choix, bonneReponse, couleurCase) {
     const questionP = document.getElementById('question-div').querySelector('p');
     const boutons = document.getElementById('question-div').querySelectorAll('button');
-
+    const diceBtn = document.getElementById('dice-roll');
     const lettreChoisie = choix.charAt(0);
 
     if (lettreChoisie === bonneReponse) {
-        if (!anneauxGagnes.includes(couleurCase)) {
-            anneauxGagnes.push(couleurCase);
-            score = anneauxGagnes.length;
-            alert(`Bonne réponse ! Tu obtiens l'anneau ${couleurCase}`);
+        if (casesAnneaux[playerPosition]) {
+            if (!anneauxGagnes.includes(couleurCase)) {
+                anneauxGagnes.push(couleurCase);
+                score = anneauxGagnes.length;
+                alert(`Bonne réponse ! Tu obtiens l'anneau ${couleurCase}`);
+            } else {
+                alert("Bonne réponse ! Anneau déjà collecté");
+            }
         } else {
-            alert("Bonne réponse ! Anneau déjà collecté");
+            alert("Bonne réponse ! Continuez vers une case dorée pour gagner un anneau.");
         }
 
         document.querySelector('#aside div span').innerText = `${score}/5`;
-
         if (score >= 5) {
             alert("Félicitations ! Vous avez collecté les 5 anneaux olympiques !");
         }
@@ -68,6 +67,7 @@ function verifierReponse(choix, bonneReponse, couleurCase) {
         btn.style.display = "none";
     });
 
+    diceBtn.disabled = false;
     sauvegarderPartie();
 }
 
@@ -89,17 +89,38 @@ function chargerPartie() {
         score = etat.score;
         anneauxGagnes = etat.anneauxGagnes || [];
         casesAnneaux = etat.casesAnneaux || {};
-
         document.querySelector('#aside div span').innerText = `${score}/5`;
+        generateQuestions();
+        if (typeof redrawAll === "function") redrawAll();
+    }
+}
+
+function nouvellePartie() {
+    if (confirm("Voulez-vous vraiment recommencer une nouvelle partie ?")) {
+        localStorage.removeItem('sauvegardeJO');
+        score = 0;
+        anneauxGagnes = [];
+        playerPosition = 0;
+
+        document.getElementById('dice-roll').disabled = false;
+
+        genererCasesAnneaux(16);
+        generateQuestions();
+        document.querySelector('#aside div span').innerText = `0/5`;
+        document.getElementById('question-div').querySelector('p').innerText = "Lancez les dés pour commencer";
+        const boutons = document.getElementById('question-div').querySelectorAll('button');
+        boutons.forEach(btn => btn.style.display = "none");
         if (typeof redrawAll === "function") redrawAll();
     }
 }
 
 async function gererArriveeSurCase(couleurCase) {
     const themeChoisi = themesParCouleur[couleurCase];
+    const diceBtn = document.getElementById('dice-roll');
 
     if (!themeChoisi) return;
 
+    diceBtn.disabled = true;
     document.getElementById('question-div').querySelector('p').innerText = "Chargement...";
 
     try {
@@ -107,6 +128,7 @@ async function gererArriveeSurCase(couleurCase) {
         afficherQuestion(questionRecue, couleurCase);
     } catch (error) {
         document.getElementById('question-div').querySelector('p').innerText = "Erreur de connexion à l'IA.";
+        diceBtn.disabled = false;
     }
 }
 
@@ -124,7 +146,7 @@ async function fetchQuestion(thematique) {
             messages: [
                 {
                     role: "user",
-                    content: `Génère une question de quiz sur les JO pour la thématique : ${thematique}. 
+                    content: `Génère une question de quiz sur les JO d'Hiver pour la thématique : ${thematique}. 
                               Donne 4 options de réponse et précise la bonne (juste la lettre A, B, C ou D). 
                               Réponds uniquement au format JSON : 
                               {"question": "...", "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "answer": "..."}`
@@ -132,13 +154,11 @@ async function fetchQuestion(thematique) {
             ]
         })
     });
-
     const data = await response.json();
     let content = data.choices[0].message.content;
     const firstBracket = content.indexOf('{');
     const lastBracket = content.lastIndexOf('}');
     content = content.substring(firstBracket, lastBracket + 1);
-
     return JSON.parse(content);
 }
 
@@ -146,12 +166,17 @@ function initGame() {
     const boutons = document.getElementById('question-div').querySelectorAll('button');
     boutons.forEach(btn => btn.style.display = "none");
     document.getElementById('question-div').querySelector('p').innerText = "Lancez les dés pour commencer";
+    const btnNewGame = document.getElementById('new-game');
+    if (btnNewGame) btnNewGame.addEventListener('click', nouvellePartie);
+
+    document.getElementById('dice-roll').disabled = false;
 
     const sauvegarde = localStorage.getItem('sauvegardeJO');
     if (sauvegarde) {
         chargerPartie();
     } else {
         genererCasesAnneaux(16);
+        generateQuestions();
     }
 }
 
