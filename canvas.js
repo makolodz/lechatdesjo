@@ -28,7 +28,9 @@ function generateQuestions() {
     function getRandomElement(arr) {
         return arr[Math.floor(Math.random() * arr.length)];
     }
-    const available = ["red", "green", "blue", "pink", "cyan"];
+
+    const available = ["red", "green", "blue", "yellow", "black"];
+
     for (let i = 0; i < nbCercles; i++) {
         if (casesAnneaux && casesAnneaux[i]) {
             questions[i] = casesAnneaux[i];
@@ -118,22 +120,8 @@ function drawCircles() {
 
         ctx.beginPath();
         ctx.arc(x, y, circleRadius, 0, 2 * Math.PI);
-        ctx.fillStyle = questions[i];
-        ctx.fill();
-
-        if (casesAnneaux && casesAnneaux[i]) {
-            ctx.lineWidth = 5;
-            ctx.strokeStyle = "#FFD700";
-            ctx.stroke();
-            ctx.fillStyle = "white";
-            ctx.font = "bold 14px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText("O", x, y + 5);
-        } else {
-            ctx.lineWidth = 1;
-            ctx.strokeStyle = "rgba(0,0,0,0.2)";
-            ctx.stroke();
-        }
+        ctx.strokeStyle = questions[i];
+        ctx.stroke();
     }
 }
 
@@ -158,10 +146,73 @@ function drawPawn() {
     }
 }
 
+// draw olympic rings => 5 anneaux grisés + couleurs de l'anneau quand obtenu.
+
+function drawOlympicLogo() {
+    objet = {
+        red: true,
+        green: true,
+        blue : false,
+        yellow: false,
+        black: true,
+    }
+
+    if (objet.red) {
+        ctx.strokeStyle = "red";
+    } else {
+        ctx.strokeStyle = "grey";
+    }
+
+    ctx.beginPath();
+    ctx.arc(canvas.width/2+100, canvas.height/2-25, circleRadius+10, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    if (objet.green) {
+        ctx.strokeStyle = "green";
+    } else {
+        ctx.strokeStyle = "grey";
+    }
+
+    ctx.beginPath();
+    ctx.arc(canvas.width/2-100, canvas.height/2-25, circleRadius+10, 0, 2 * Math.PI);
+    ctx.stroke();
+    
+    if (objet.blue) {
+        ctx.strokeStyle = "blue";
+    } else {
+        ctx.strokeStyle = "grey";
+    }
+
+    ctx.beginPath();
+    ctx.arc(canvas.width/2-50, canvas.height/2+25, circleRadius+10, 0, 2 * Math.PI);
+    ctx.stroke();    
+    
+    if (objet.yellow) {
+        ctx.strokeStyle = "yellow";
+    } else {
+        ctx.strokeStyle = "grey";
+    }
+
+    ctx.beginPath();
+    ctx.arc(canvas.width/2+50, canvas.height/2+25, circleRadius+10, 0, 2 * Math.PI);
+    ctx.stroke();    
+    
+    if (objet.black) {
+        ctx.strokeStyle = "black";
+    } else {
+        ctx.strokeStyle = "grey";
+    }
+
+    ctx.beginPath();
+    ctx.arc(canvas.width/2, canvas.height/2-25, circleRadius+10, 0, 2 * Math.PI);
+    ctx.stroke();
+}
+
 function redrawAll() {
     drawIceRink();
     drawCircles();
     drawPawn();
+    drawOlympicLogo();
 }
 
 function initCanvas() {
