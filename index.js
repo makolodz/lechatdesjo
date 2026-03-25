@@ -168,7 +168,16 @@ async function fetchQuestion(thematique) {
         },
         body: JSON.stringify({
             model: "mistral-tiny",
-            messages: [{ role: "user", content: `Question quiz JO Hiver Thème: ${thematique}. Format JSON: {"question": "...", "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "answer": "..."}` }]
+            "temperature": 0.7,
+            messages: [
+                {
+                    role: "user",
+                    content: `Génère une question de quiz sur les JO d'Hiver pour la thématique : ${thematique}. 
+                              Donne 4 options de réponse et précise la bonne (juste la lettre A, B, C ou D). 
+                              Réponds uniquement au format JSON : 
+                              {"question": "...", "options": ["A. ...", "B. ...", "C. ...", "D. ..."], "answer": "..."}`
+                }
+            ]
         })
     });
     const data = await response.json();
