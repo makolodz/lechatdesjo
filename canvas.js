@@ -1,10 +1,8 @@
 let button;
 let canvas;
 let ctx;
-
 let w;
 let h;
-
 let radius;
 let straight;
 let centerY;
@@ -13,21 +11,18 @@ let right;
 const laneGap = 30;
 const nbCercles = 16;
 const circleRadius = 20;
-
 let innerRadius;
 let straightLength;
 let arcLength;
 let totalLength;
-
 let questions = [];
 let avancements = [];
-
 let step;
 let totalSteps = 100;
-
 let img = new Image();
-let playerPosition = 0;
-const pionRadius = 15;
+
+let playerPositions = [0, 0, 0, 0];
+const playerColors = ["#FF5733", "#33FF57", "#3357FF", "#F333FF"];
 
 function generateQuestions() {
     function getRandomElement(arr) {
@@ -37,20 +32,22 @@ function generateQuestions() {
     const available = ["red", "green", "blue", "yellow", "black"];
 
     for (let i = 0; i < nbCercles; i++) {
-        questions[i] = getRandomElement(available);
+        if (casesAnneaux && casesAnneaux[i]) {
+            questions[i] = casesAnneaux[i];
+        } else {
+            questions[i] = getRandomElement(available);
+        }
     }
 }
 
 function updateGeometry() {
     w = canvas.width;
     h = canvas.height;
-
     radius = h * 0.25;
     straight = w * 0.5;
     centerY = h / 2;
     left = (w - straight) / 2;
     right = left + straight;
-
     innerRadius = radius;
     straightLength = right - left;
     arcLength = Math.PI * innerRadius;
@@ -87,35 +84,28 @@ function drawIceRink() {
 function getPointOnTrack(t) {
     let d = t % totalLength;
     const TRACK_MIDDLE_OFFSET = laneGap * 1.5;
-
     const yTop = centerY - radius - TRACK_MIDDLE_OFFSET;
     const yBottom = centerY + radius + TRACK_MIDDLE_OFFSET;
     const arcRadius = radius + TRACK_MIDDLE_OFFSET;
-
     if (d <= straightLength) {
         const x = left + d;
         const y = yTop;
         return { x, y };
     }
     d -= straightLength;
-
     if (d <= arcLength) {
         const angle = -Math.PI / 2 + (d / arcLength) * Math.PI;
         const x = right + arcRadius * Math.cos(angle);
         const y = centerY + arcRadius * Math.sin(angle);
         return { x, y };
     }
-    
     d = (t % totalLength) - straightLength - arcLength;
-
     if (d <= straightLength) {
         const x = right - d;
         const y = yBottom;
         return { x, y };
     }
-    
     d = (t % totalLength) - (2 * straightLength + arcLength);
-
     const angle = Math.PI / 2 + (d / arcLength) * Math.PI;
     const x = left + arcRadius * Math.cos(angle);
     const y = centerY + arcRadius * Math.sin(angle);
@@ -126,7 +116,6 @@ function drawCircles() {
     for (let i = 0; i < nbCercles; i++) {
         const t = (i / nbCercles) * totalLength;
         const { x, y } = getPointOnTrack(t);
-        
         avancements[i] = [x, y];
 
         ctx.beginPath();
@@ -137,8 +126,23 @@ function drawCircles() {
 }
 
 function drawPawn() {
-    if (avancements[playerPosition]) {
-        ctx.drawImage(img, avancements[playerPosition][0] - 45, avancements[playerPosition][1] - 45, 90, 90);
+    for (let i = 0; i < nbPlayers; i++) {
+        let pos = playerPositions[i];
+        if (avancements[pos]) {
+            let offsetX = (i % 2 === 0) ? -10 : 10;
+            let offsetY = (i < 2) ? -10 : 10;
+            let px = avancements[pos][0] + offsetX;
+            let py = avancements[pos][1] + offsetY;
+
+            // Dessin du pion
+            ctx.drawImage(img, px - 25, py - 25, 50, 50);
+
+            // Texte P1, P2... au dessus des pions
+            ctx.fillStyle = "black";
+            ctx.font = "bold 12px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("P" + (i + 1), px, py - 20);
+        }
     }
 }
 
@@ -211,37 +215,27 @@ function redrawAll() {
     drawOlympicLogo();
 }
 
-function init() {
-    img.src = "./pawn.png"; 
-
-    generateQuestions();
+function initCanvas() {
+    img.src = "./pawn.png";
     canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
-
     resizeCanvas();
-    
     img.onload = () => {
         redrawAll();
     };
-
     const diceBtn = document.getElementById('dice-roll');
-
     diceBtn.addEventListener('click', () => {
         const de = Math.floor(Math.random() * 6) + 1;
-        alert("Tu as fait un " + de + " !");
-        
-        playerPosition = (playerPosition + de) % nbCercles;
-        
+        alert("Joueur " + (currentPlayer + 1) + " a fait un " + de + " !");
+        playerPositions[currentPlayer] = (playerPositions[currentPlayer] + de) % nbCercles;
         redrawAll();
-        
-        const couleurCase = questions[playerPosition];
+        const couleurCase = questions[playerPositions[currentPlayer]];
         gererArriveeSurCase(couleurCase);
     });
-
     window.addEventListener("resize", () => {
         resizeCanvas();
         redrawAll();
     });
 }
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", initCanvas);
