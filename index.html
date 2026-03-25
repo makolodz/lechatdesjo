@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>JO Board Game</title>
     <link rel="stylesheet" href="./style.css">
 </head>
 
@@ -12,23 +12,25 @@
     <aside id="aside">
         <div>
             <h1>Oval speed questions</h1>
-            <div>Joueur 1<span>0/5</span></div>
+            <div>Joueur 1 <span id="score-display">0/5</span></div>
         </div>
         <div id="question-div">
-            <p>question</p>
+            <p>Chargement...</p>
             <button type="button">réponse 1</button>
             <button type="button">réponse 2</button>
             <button type="button">réponse 3</button>
             <button type="button">réponse 4</button>
         </div>
-        <button type="button" id="dice-roll">lancer les dés</button>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button type="button" id="dice-roll">Lancer les dés</button>
+            <button type="button" id="new-game">Nouvelle Partie</button>
+        </div>
     </aside>
     <main id="main">
-        <canvas width="" height="" id="canvas">
-        </canvas>
+        <canvas id="canvas"></canvas>
     </main>
-    <script src="./index.js"></script>
     <script src="./canvas.js"></script>
+    <script src="./index.js"></script>
 </body>
 
 </html>

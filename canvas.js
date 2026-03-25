@@ -1,9 +1,8 @@
+let button;
 let canvas;
 let ctx;
-
 let w;
 let h;
-
 let radius;
 let straight;
 let centerY;
@@ -12,14 +11,15 @@ let right;
 const laneGap = 30;
 const nbCercles = 16;
 const circleRadius = 20;
-
 let innerRadius;
 let straightLength;
 let arcLength;
 let totalLength;
-
 let questions = [];
-
+let avancements = [];
+let step;
+let totalSteps = 100;
+let img = new Image();
 let playerPosition = 0;
 const pionRadius = 15;
 
@@ -27,24 +27,24 @@ function generateQuestions() {
     function getRandomElement(arr) {
         return arr[Math.floor(Math.random() * arr.length)];
     }
-
     const available = ["red", "green", "blue", "pink", "cyan"];
-
     for (let i = 0; i < nbCercles; i++) {
-        questions[i] = getRandomElement(available);
+        if (casesAnneaux && casesAnneaux[i]) {
+            questions[i] = casesAnneaux[i];
+        } else {
+            questions[i] = getRandomElement(available);
+        }
     }
 }
 
 function updateGeometry() {
     w = canvas.width;
     h = canvas.height;
-
     radius = h * 0.25;
     straight = w * 0.5;
     centerY = h / 2;
     left = (w - straight) / 2;
     right = left + straight;
-
     innerRadius = radius;
     straightLength = right - left;
     arcLength = Math.PI * innerRadius;
@@ -81,34 +81,28 @@ function drawIceRink() {
 function getPointOnTrack(t) {
     let d = t % totalLength;
     const TRACK_MIDDLE_OFFSET = laneGap * 1.5;
-
     const yTop = centerY - radius - TRACK_MIDDLE_OFFSET;
     const yBottom = centerY + radius + TRACK_MIDDLE_OFFSET;
     const arcRadius = radius + TRACK_MIDDLE_OFFSET;
-
     if (d <= straightLength) {
         const x = left + d;
         const y = yTop;
         return { x, y };
     }
     d -= straightLength;
-
     if (d <= arcLength) {
         const angle = -Math.PI / 2 + (d / arcLength) * Math.PI;
         const x = right + arcRadius * Math.cos(angle);
         const y = centerY + arcRadius * Math.sin(angle);
         return { x, y };
     }
-    d -= straightLength; // Note: Correction logique ici pour la soustraction correcte du segment précédent
     d = (t % totalLength) - straightLength - arcLength;
-
     if (d <= straightLength) {
         const x = right - d;
         const y = yBottom;
         return { x, y };
     }
     d = (t % totalLength) - (2 * straightLength + arcLength);
-
     const angle = Math.PI / 2 + (d / arcLength) * Math.PI;
     const x = left + arcRadius * Math.cos(angle);
     const y = centerY + arcRadius * Math.sin(angle);
@@ -119,57 +113,63 @@ function drawCircles() {
     for (let i = 0; i < nbCercles; i++) {
         const t = (i / nbCercles) * totalLength;
         const { x, y } = getPointOnTrack(t);
+        avancements[i] = [x, y];
+
         ctx.beginPath();
         ctx.arc(x, y, circleRadius, 0, 2 * Math.PI);
         ctx.fillStyle = questions[i];
         ctx.fill();
+
+        if (casesAnneaux && casesAnneaux[i]) {
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = "#FFD700";
+            ctx.stroke();
+
+            ctx.fillStyle = "white";
+            ctx.font = "bold 14px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("O", x, y + 5);
+        } else {
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = "rgba(0,0,0,0.2)";
+            ctx.stroke();
+        }
+    }
+}
+
+function drawPawn() {
+    if (avancements[playerPosition]) {
+        ctx.drawImage(img, avancements[playerPosition][0] - 45, avancements[playerPosition][1] - 45, 90, 90);
     }
 }
 
 function redrawAll() {
     drawIceRink();
     drawCircles();
-    drawPlayer();
+    drawPawn();
 }
 
-function init() {
-    generateQuestions();
+function initCanvas() {
+    img.src = "./pawn.png";
     canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
-
     resizeCanvas();
-    redrawAll();
-
+    img.onload = () => {
+        redrawAll();
+    };
     const diceBtn = document.getElementById('dice-roll');
-
     diceBtn.addEventListener('click', () => {
         const de = Math.floor(Math.random() * 6) + 1;
-        alert("Tu as fait " + de + " !");
+        alert("Tu as fait un " + de + " !");
         playerPosition = (playerPosition + de) % nbCercles;
         redrawAll();
         const couleurCase = questions[playerPosition];
         gererArriveeSurCase(couleurCase);
     });
-
     window.addEventListener("resize", () => {
         resizeCanvas();
         redrawAll();
     });
 }
 
-function drawPlayer() {
-    const t = (playerPosition / nbCercles) * totalLength;
-    const { x, y } = getPointOnTrack(t);
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(x, y, pionRadius, 0, 2 * Math.PI);
-    ctx.fillStyle = "black";
-    ctx.fill();
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    ctx.restore();
-}
-
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", initCanvas);

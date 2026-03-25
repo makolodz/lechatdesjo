@@ -1,4 +1,4 @@
-// État du jeu (Score et suivi des anneaux)
+let casesAnneaux = {};
 let score = 0;
 let anneauxGagnes = [];
 
@@ -10,36 +10,50 @@ const themesParCouleur = {
     "cyan": "Défis technologiques et controverses"
 };
 
-// UI
+function genererCasesAnneaux(nombreTotalCases) {
+    casesAnneaux = {};
+    const couleurs = Object.keys(themesParCouleur);
+    const indicesDisponibles = Array.from({ length: nombreTotalCases }, (_, i) => i);
 
-function afficherQuestion(data) {
+    couleurs.forEach(couleur => {
+        const rand = Math.floor(Math.random() * indicesDisponibles.length);
+        const indexCase = indicesDisponibles.splice(rand, 1)[0];
+        casesAnneaux[indexCase] = couleur;
+    });
+}
+
+function afficherQuestion(data, couleurCase) {
     const questionDiv = document.getElementById('question-div');
     const questionP = questionDiv.querySelector('p');
     const boutons = questionDiv.querySelectorAll('button');
 
-    // Affiche la question
     questionP.innerText = data.question;
 
-    // Configure chaque bouton avec une option de réponse
     data.options.forEach((option, index) => {
         boutons[index].innerText = option;
-        boutons[index].style.display = "block"; // Assure qu'ils sont visibles
+        boutons[index].style.display = "block";
 
-        // vérifie la réponse au clic
         boutons[index].onclick = () => {
-            verifierReponse(option, data.answer);
+            verifierReponse(option, data.answer, couleurCase);
         };
     });
 }
 
-function verifierReponse(choix, bonneReponse) {
+function verifierReponse(choix, bonneReponse, couleurCase) {
     const questionP = document.getElementById('question-div').querySelector('p');
     const boutons = document.getElementById('question-div').querySelectorAll('button');
 
-    if (choix === bonneReponse) {
-        alert("Bonne réponse !");
-        score++;
-        // Mise à jour de l'affichage du score (ex: 1/5)
+    const lettreChoisie = choix.charAt(0);
+
+    if (lettreChoisie === bonneReponse) {
+        if (!anneauxGagnes.includes(couleurCase)) {
+            anneauxGagnes.push(couleurCase);
+            score = anneauxGagnes.length;
+            alert(`Bonne réponse ! Tu obtiens l'anneau ${couleurCase}`);
+        } else {
+            alert("Bonne réponse ! Anneau déjà collecté");
+        }
+
         document.querySelector('#aside div span').innerText = `${score}/5`;
 
         if (score >= 5) {
@@ -49,20 +63,20 @@ function verifierReponse(choix, bonneReponse) {
         alert("Dommage ! La réponse était : " + bonneReponse);
     }
 
-    // Réinitialise l'affichage pour le prochain tour
     questionP.innerText = "Lancez les dés pour une nouvelle question";
-    boutons.forEach(btn => btn.innerText = "...");
+    boutons.forEach(btn => {
+        btn.style.display = "none";
+    });
 
-    // Save la progression
     sauvegarderPartie();
 }
 
-// Local storage
-
 function sauvegarderPartie() {
     const etatJeu = {
-        position: playerPosition, // Variable venant de canvas.js
-        score: score
+        position: playerPosition,
+        score: score,
+        anneauxGagnes: anneauxGagnes,
+        casesAnneaux: casesAnneaux
     };
     localStorage.setItem('sauvegardeJO', JSON.stringify(etatJeu));
 }
@@ -73,32 +87,25 @@ function chargerPartie() {
         const etat = JSON.parse(sauvegarde);
         playerPosition = etat.position;
         score = etat.score;
+        anneauxGagnes = etat.anneauxGagnes || [];
+        casesAnneaux = etat.casesAnneaux || {};
 
-        // Mise à jour visuelle
         document.querySelector('#aside div span').innerText = `${score}/5`;
         if (typeof redrawAll === "function") redrawAll();
-        console.log("Partie chargée !");
     }
 }
-
-// QUESTION API
 
 async function gererArriveeSurCase(couleurCase) {
     const themeChoisi = themesParCouleur[couleurCase];
 
-    if (!themeChoisi) {
-        console.error("Couleur inconnue par le jeu :", couleurCase);
-        return;
-    }
+    if (!themeChoisi) return;
 
     document.getElementById('question-div').querySelector('p').innerText = "Chargement...";
 
     try {
         const questionRecue = await fetchQuestion(themeChoisi);
-        // Affiche la question
-        afficherQuestion(questionRecue);
+        afficherQuestion(questionRecue, couleurCase);
     } catch (error) {
-        console.error("Erreur lors de la récupération :", error);
         document.getElementById('question-div').querySelector('p').innerText = "Erreur de connexion à l'IA.";
     }
 }
@@ -128,8 +135,6 @@ async function fetchQuestion(thematique) {
 
     const data = await response.json();
     let content = data.choices[0].message.content;
-
-    // Eviter les '''json
     const firstBracket = content.indexOf('{');
     const lastBracket = content.lastIndexOf('}');
     content = content.substring(firstBracket, lastBracket + 1);
@@ -137,11 +142,17 @@ async function fetchQuestion(thematique) {
     return JSON.parse(content);
 }
 
-function init() {
-    console.log("Système de quiz initialisé.");
-    chargerPartie(); // Tente de charger une ancienne partie au démarrage
+function initGame() {
+    const boutons = document.getElementById('question-div').querySelectorAll('button');
+    boutons.forEach(btn => btn.style.display = "none");
+    document.getElementById('question-div').querySelector('p').innerText = "Lancez les dés pour commencer";
+
+    const sauvegarde = localStorage.getItem('sauvegardeJO');
+    if (sauvegarde) {
+        chargerPartie();
+    } else {
+        genererCasesAnneaux(16);
+    }
 }
 
-document.addEventListener("DOMContentLoaded", init);
-
-// API : Sécurité anti-crash
+document.addEventListener("DOMContentLoaded", initGame);
