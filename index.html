@@ -9,10 +9,11 @@
 
 <body id="wrapper">
     <aside id="aside">
-        <div>
+        <div id="aside--title">
             <h1>Olympic Speed Quiz</h1>
             <div id="scores-list"></div>
         </div>
+
         <div id="question-div">
             <p>Initialisation...</p>
             <button type="button">R1</button>
@@ -20,14 +21,17 @@
             <button type="button">R3</button>
             <button type="button">R4</button>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
+
+        <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
             <button type="button" id="dice-roll">Lancer les dés</button>
             <button type="button" id="new-game">Nouvelle Partie</button>
         </div>
     </aside>
+
     <main id="main">
         <canvas id="canvas"></canvas>
     </main>
+
     <script src="./canvas.js"></script>
     <script src="./index.js"></script>
 </body>

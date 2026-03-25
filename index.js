@@ -7,8 +7,8 @@ const themesParCouleur = {
     "blue": "Histoire des Jeux Olympiques",
     "green": "Disciplines et Épreuves",
     "red": "Athlètes Légendaires",
-    "pink": "Impact Social et Culturel",
-    "cyan": "Défis technologiques et controverses"
+    "yellow": "Impact Social et Culturel",
+    "black": "Défis technologiques et controverses"
 };
 
 function genererCasesAnneaux(nombreTotalCases) {
@@ -30,8 +30,8 @@ function mettreAJourUI() {
         pEl.style.padding = "5px";
         pEl.style.borderRadius = "5px";
         if (i === currentPlayer) {
-            pEl.style.backgroundColor = "#e0f0ff";
-            pEl.style.border = "2px solid #007bff";
+            pEl.style.backgroundColor = "oklch(90.1% 0.058 230.902)";
+            pEl.style.border = "2px solid oklch(29.3% 0.066 243.157)";
             pEl.innerHTML = `<strong>> Joueur ${i + 1}: ${p.anneaux.length}/5</strong>`;
         } else {
             pEl.innerHTML = `Joueur ${i + 1}: ${p.anneaux.length}/5`;
@@ -61,7 +61,8 @@ function verifierReponse(choix, bonneReponse, couleurCase) {
     const lettreChoisie = choix.charAt(0);
 
     if (lettreChoisie === bonneReponse) {
-        if (casesAnneaux[playerPositions[currentPlayer]]) {
+        // Vérifie si le joueur est sur sa case QG (Anneau)
+        if (casesAnneaux[playerPositions[currentPlayer]] === couleurCase) {
             if (!playersData[currentPlayer].anneaux.includes(couleurCase)) {
                 playersData[currentPlayer].anneaux.push(couleurCase);
                 alert(`Bravo Joueur ${currentPlayer + 1} ! Tu gagnes l'anneau ${couleurCase}`);
@@ -69,7 +70,7 @@ function verifierReponse(choix, bonneReponse, couleurCase) {
                 alert("Bonne réponse ! Anneau déjà possédé.");
             }
         } else {
-            alert("Bonne réponse !");
+            alert("Bonne réponse ! Continuez vers une case dorée pour gagner l'anneau.");
         }
 
         if (playersData[currentPlayer].anneaux.length >= 5) {
@@ -78,6 +79,7 @@ function verifierReponse(choix, bonneReponse, couleurCase) {
             questionP.innerText = `PARTIE TERMINÉE : Victoire du Joueur ${currentPlayer + 1}`;
             boutons.forEach(btn => btn.style.display = "none");
             sauvegarderPartie();
+            if (typeof redrawAll === "function") redrawAll();
             return;
         }
     } else {
@@ -91,6 +93,7 @@ function verifierReponse(choix, bonneReponse, couleurCase) {
     boutons.forEach(btn => btn.style.display = "none");
     diceBtn.disabled = false;
     sauvegarderPartie();
+    if (typeof redrawAll === "function") redrawAll();
 }
 
 function sauvegarderPartie() {
@@ -141,6 +144,7 @@ function nouvellePartie() {
     const boutons = document.getElementById('question-div').querySelectorAll('button');
     boutons.forEach(btn => btn.style.display = "none");
     if (typeof redrawAll === "function") redrawAll();
+    sauvegarderPartie();
 }
 
 async function gererArriveeSurCase(couleurCase) {

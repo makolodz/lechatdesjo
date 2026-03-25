@@ -120,8 +120,22 @@ function drawCircles() {
 
         ctx.beginPath();
         ctx.arc(x, y, circleRadius, 0, 2 * Math.PI);
-        ctx.strokeStyle = questions[i];
-        ctx.stroke();
+        ctx.fillStyle = questions[i];
+        ctx.fill();
+
+        if (casesAnneaux && casesAnneaux[i]) {
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = "#FFD700";
+            ctx.stroke();
+            ctx.fillStyle = "white";
+            ctx.font = "bold 14px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("O", x, y + 5);
+        } else {
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = "rgba(0,0,0,0.2)";
+            ctx.stroke();
+        }
     }
 }
 
@@ -134,10 +148,8 @@ function drawPawn() {
             let px = avancements[pos][0] + offsetX;
             let py = avancements[pos][1] + offsetY;
 
-            // Dessin du pion
             ctx.drawImage(img, px - 25, py - 25, 50, 50);
 
-            // Texte P1, P2... au dessus des pions
             ctx.fillStyle = "black";
             ctx.font = "bold 12px Arial";
             ctx.textAlign = "center";
@@ -146,66 +158,30 @@ function drawPawn() {
     }
 }
 
-// draw olympic rings => 5 anneaux grisés + couleurs de l'anneau quand obtenu.
-
 function drawOlympicLogo() {
-    objet = {
-        red: true,
-        green: true,
-        blue : false,
-        yellow: false,
-        black: true,
-    }
+    const startX = canvas.width / 2;
+    const startY = canvas.height / 2;
+    const spacing = 60;
 
-    if (objet.red) {
-        ctx.strokeStyle = "red";
-    } else {
-        ctx.strokeStyle = "grey";
-    }
+    // On récupère les anneaux du joueur en cours pour savoir quoi colorer
+    const currentAnneaux = (playersData[currentPlayer]) ? playersData[currentPlayer].anneaux : [];
 
-    ctx.beginPath();
-    ctx.arc(canvas.width/2+100, canvas.height/2-25, circleRadius+10, 0, 2 * Math.PI);
-    ctx.stroke();
+    const rings = [
+        { x: startX - spacing, y: startY - 20, color: "blue" },
+        { x: startX, y: startY - 20, color: "black" },
+        { x: startX + spacing, y: startY - 20, color: "red" },
+        { x: startX - spacing / 2, y: startY + 20, color: "yellow" },
+        { x: startX + spacing / 2, y: startY + 20, color: "green" }
+    ];
 
-    if (objet.green) {
-        ctx.strokeStyle = "green";
-    } else {
-        ctx.strokeStyle = "grey";
-    }
-
-    ctx.beginPath();
-    ctx.arc(canvas.width/2-100, canvas.height/2-25, circleRadius+10, 0, 2 * Math.PI);
-    ctx.stroke();
-    
-    if (objet.blue) {
-        ctx.strokeStyle = "blue";
-    } else {
-        ctx.strokeStyle = "grey";
-    }
-
-    ctx.beginPath();
-    ctx.arc(canvas.width/2-50, canvas.height/2+25, circleRadius+10, 0, 2 * Math.PI);
-    ctx.stroke();    
-    
-    if (objet.yellow) {
-        ctx.strokeStyle = "yellow";
-    } else {
-        ctx.strokeStyle = "grey";
-    }
-
-    ctx.beginPath();
-    ctx.arc(canvas.width/2+50, canvas.height/2+25, circleRadius+10, 0, 2 * Math.PI);
-    ctx.stroke();    
-    
-    if (objet.black) {
-        ctx.strokeStyle = "black";
-    } else {
-        ctx.strokeStyle = "grey";
-    }
-
-    ctx.beginPath();
-    ctx.arc(canvas.width/2, canvas.height/2-25, circleRadius+10, 0, 2 * Math.PI);
-    ctx.stroke();
+    ctx.lineWidth = 5;
+    rings.forEach(ring => {
+        ctx.beginPath();
+        // Si le joueur a l'anneau, on met la couleur, sinon gris
+        ctx.strokeStyle = currentAnneaux.includes(ring.color) ? ring.color : "lightgrey";
+        ctx.arc(ring.x, ring.y, circleRadius + 5, 0, 2 * Math.PI);
+        ctx.stroke();
+    });
 }
 
 function redrawAll() {
