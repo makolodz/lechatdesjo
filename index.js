@@ -1,6 +1,7 @@
-// État du jeu (Score et suivi des anneaux)
-let score = 0;
-let anneauxGagnes = [];
+let casesAnneaux = {};
+let nbPlayers = 1;
+let currentPlayer = 0;
+let playersData = [];
 
 const themesParCouleur = {
     "blue": "Histoire des Jeux Olympiques",
@@ -10,96 +11,150 @@ const themesParCouleur = {
     "cyan": "Défis technologiques et controverses"
 };
 
-// UI
+function genererCasesAnneaux(nombreTotalCases) {
+    casesAnneaux = {};
+    const couleurs = Object.keys(themesParCouleur);
+    const indicesDisponibles = Array.from({ length: nombreTotalCases }, (_, i) => i);
+    couleurs.forEach(couleur => {
+        const rand = Math.floor(Math.random() * indicesDisponibles.length);
+        const indexCase = indicesDisponibles.splice(rand, 1)[0];
+        casesAnneaux[indexCase] = couleur;
+    });
+}
 
-function afficherQuestion(data) {
+function mettreAJourUI() {
+    const scoresDiv = document.getElementById('scores-list');
+    scoresDiv.innerHTML = "";
+    playersData.forEach((p, i) => {
+        const pEl = document.createElement('div');
+        pEl.style.padding = "5px";
+        pEl.style.borderRadius = "5px";
+        if (i === currentPlayer) {
+            pEl.style.backgroundColor = "#e0f0ff";
+            pEl.style.border = "2px solid #007bff";
+            pEl.innerHTML = `<strong>> Joueur ${i + 1}: ${p.anneaux.length}/5</strong>`;
+        } else {
+            pEl.innerHTML = `Joueur ${i + 1}: ${p.anneaux.length}/5`;
+        }
+        scoresDiv.appendChild(pEl);
+    });
+}
+
+function afficherQuestion(data, couleurCase) {
     const questionDiv = document.getElementById('question-div');
     const questionP = questionDiv.querySelector('p');
     const boutons = questionDiv.querySelectorAll('button');
-
-    // Affiche la question
-    questionP.innerText = data.question;
-
-    // Configure chaque bouton avec une option de réponse
+    questionP.innerText = `[J${currentPlayer + 1}] ` + data.question;
     data.options.forEach((option, index) => {
         boutons[index].innerText = option;
-        boutons[index].style.display = "block"; // Assure qu'ils sont visibles
-
-        // vérifie la réponse au clic
+        boutons[index].style.display = "block";
         boutons[index].onclick = () => {
-            verifierReponse(option, data.answer);
+            verifierReponse(option, data.answer, couleurCase);
         };
     });
 }
 
-function verifierReponse(choix, bonneReponse) {
+function verifierReponse(choix, bonneReponse, couleurCase) {
     const questionP = document.getElementById('question-div').querySelector('p');
     const boutons = document.getElementById('question-div').querySelectorAll('button');
+    const diceBtn = document.getElementById('dice-roll');
+    const lettreChoisie = choix.charAt(0);
 
-    if (choix === bonneReponse) {
-        alert("Bonne réponse !");
-        score++;
-        // Mise à jour de l'affichage du score (ex: 1/5)
-        document.querySelector('#aside div span').innerText = `${score}/5`;
+    if (lettreChoisie === bonneReponse) {
+        if (casesAnneaux[playerPositions[currentPlayer]]) {
+            if (!playersData[currentPlayer].anneaux.includes(couleurCase)) {
+                playersData[currentPlayer].anneaux.push(couleurCase);
+                alert(`Bravo Joueur ${currentPlayer + 1} ! Tu gagnes l'anneau ${couleurCase}`);
+            } else {
+                alert("Bonne réponse ! Anneau déjà possédé.");
+            }
+        } else {
+            alert("Bonne réponse !");
+        }
 
-        if (score >= 5) {
-            alert("Félicitations ! Vous avez collecté les 5 anneaux olympiques !");
+        if (playersData[currentPlayer].anneaux.length >= 5) {
+            alert(`VICTOIRE ! Le Joueur ${currentPlayer + 1} a gagné les 5 anneaux !`);
+            diceBtn.disabled = true;
+            questionP.innerText = `PARTIE TERMINÉE : Victoire du Joueur ${currentPlayer + 1}`;
+            boutons.forEach(btn => btn.style.display = "none");
+            sauvegarderPartie();
+            return;
         }
     } else {
-        alert("Dommage ! La réponse était : " + bonneReponse);
+        alert("Faux ! La réponse était : " + bonneReponse);
     }
 
-    // Réinitialise l'affichage pour le prochain tour
-    questionP.innerText = "Lancez les dés pour une nouvelle question";
-    boutons.forEach(btn => btn.innerText = "...");
+    currentPlayer = (currentPlayer + 1) % nbPlayers;
+    mettreAJourUI();
 
-    // Save la progression
+    questionP.innerText = `Tour du Joueur ${currentPlayer + 1}. Lancez les dés !`;
+    boutons.forEach(btn => btn.style.display = "none");
+    diceBtn.disabled = false;
     sauvegarderPartie();
 }
 
-// Local storage
-
 function sauvegarderPartie() {
     const etatJeu = {
-        position: playerPosition, // Variable venant de canvas.js
-        score: score
+        nbPlayers: nbPlayers,
+        currentPlayer: currentPlayer,
+        playerPositions: playerPositions,
+        playersData: playersData,
+        casesAnneaux: casesAnneaux
     };
-    localStorage.setItem('sauvegardeJO', JSON.stringify(etatJeu));
+    localStorage.setItem('sauvegardeJO_Multi', JSON.stringify(etatJeu));
 }
 
 function chargerPartie() {
-    const sauvegarde = localStorage.getItem('sauvegardeJO');
+    const sauvegarde = localStorage.getItem('sauvegardeJO_Multi');
     if (sauvegarde) {
         const etat = JSON.parse(sauvegarde);
-        playerPosition = etat.position;
-        score = etat.score;
-
-        // Mise à jour visuelle
-        document.querySelector('#aside div span').innerText = `${score}/5`;
+        nbPlayers = etat.nbPlayers;
+        currentPlayer = etat.currentPlayer;
+        playerPositions = etat.playerPositions;
+        playersData = etat.playersData;
+        casesAnneaux = etat.casesAnneaux;
+        mettreAJourUI();
+        generateQuestions();
+        if (playersData[currentPlayer].anneaux.length >= 5) {
+            document.getElementById('dice-roll').disabled = true;
+        }
         if (typeof redrawAll === "function") redrawAll();
-        console.log("Partie chargée !");
     }
 }
 
-// QUESTION API
+function nouvellePartie() {
+    let rep = prompt("Combien de joueurs ? (1-4)", "1");
+    let n = parseInt(rep);
+    if (isNaN(n) || n < 1 || n > 4) return;
+
+    localStorage.removeItem('sauvegardeJO_Multi');
+    nbPlayers = n;
+    currentPlayer = 0;
+    playerPositions = [0, 0, 0, 0];
+    playersData = Array.from({ length: n }, () => ({ anneaux: [] }));
+
+    document.getElementById('dice-roll').disabled = false;
+    genererCasesAnneaux(16);
+    generateQuestions();
+    mettreAJourUI();
+    document.getElementById('question-div').querySelector('p').innerText = "Joueur 1, commencez !";
+    const boutons = document.getElementById('question-div').querySelectorAll('button');
+    boutons.forEach(btn => btn.style.display = "none");
+    if (typeof redrawAll === "function") redrawAll();
+}
 
 async function gererArriveeSurCase(couleurCase) {
     const themeChoisi = themesParCouleur[couleurCase];
-
-    if (!themeChoisi) {
-        console.error("Couleur inconnue par le jeu :", couleurCase);
-        return;
-    }
-
+    const diceBtn = document.getElementById('dice-roll');
+    if (!themeChoisi) return;
+    diceBtn.disabled = true;
     document.getElementById('question-div').querySelector('p').innerText = "Chargement...";
-
     try {
         const questionRecue = await fetchQuestion(themeChoisi);
-        // Affiche la question
-        afficherQuestion(questionRecue);
+        afficherQuestion(questionRecue, couleurCase);
     } catch (error) {
-        console.error("Erreur lors de la récupération :", error);
-        document.getElementById('question-div').querySelector('p').innerText = "Erreur de connexion à l'IA.";
+        document.getElementById('question-div').querySelector('p').innerText = "Erreur API.";
+        diceBtn.disabled = false;
     }
 }
 
@@ -125,23 +180,25 @@ async function fetchQuestion(thematique) {
             ]
         })
     });
-
     const data = await response.json();
     let content = data.choices[0].message.content;
-
-    // Eviter les '''json
     const firstBracket = content.indexOf('{');
     const lastBracket = content.lastIndexOf('}');
-    content = content.substring(firstBracket, lastBracket + 1);
-
-    return JSON.parse(content);
+    return JSON.parse(content.substring(firstBracket, lastBracket + 1));
 }
 
-function init() {
-    console.log("Système de quiz initialisé.");
-    chargerPartie(); // Tente de charger une ancienne partie au démarrage
+function initGame() {
+    const boutons = document.getElementById('question-div').querySelectorAll('button');
+    boutons.forEach(btn => btn.style.display = "none");
+    const btnNewGame = document.getElementById('new-game');
+    if (btnNewGame) btnNewGame.addEventListener('click', nouvellePartie);
+
+    const sauvegarde = localStorage.getItem('sauvegardeJO_Multi');
+    if (sauvegarde) {
+        chargerPartie();
+    } else {
+        nouvellePartie();
+    }
 }
 
-document.addEventListener("DOMContentLoaded", init);
-
-// API : Sécurité anti-crash
+document.addEventListener("DOMContentLoaded", initGame);
