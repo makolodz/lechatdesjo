@@ -20,8 +20,9 @@ let avancements = [];
 let step;
 let totalSteps = 100;
 let img = new Image();
-let playerPosition = 0;
-const pionRadius = 15;
+
+let playerPositions = [0, 0, 0, 0];
+const playerColors = ["#FF5733", "#33FF57", "#3357FF", "#F333FF"];
 
 function generateQuestions() {
     function getRandomElement(arr) {
@@ -124,7 +125,6 @@ function drawCircles() {
             ctx.lineWidth = 5;
             ctx.strokeStyle = "#FFD700";
             ctx.stroke();
-
             ctx.fillStyle = "white";
             ctx.font = "bold 14px Arial";
             ctx.textAlign = "center";
@@ -138,8 +138,23 @@ function drawCircles() {
 }
 
 function drawPawn() {
-    if (avancements[playerPosition]) {
-        ctx.drawImage(img, avancements[playerPosition][0] - 45, avancements[playerPosition][1] - 45, 90, 90);
+    for (let i = 0; i < nbPlayers; i++) {
+        let pos = playerPositions[i];
+        if (avancements[pos]) {
+            let offsetX = (i % 2 === 0) ? -10 : 10;
+            let offsetY = (i < 2) ? -10 : 10;
+            let px = avancements[pos][0] + offsetX;
+            let py = avancements[pos][1] + offsetY;
+
+            // Dessin du pion
+            ctx.drawImage(img, px - 25, py - 25, 50, 50);
+
+            // Texte P1, P2... au dessus des pions
+            ctx.fillStyle = "black";
+            ctx.font = "bold 12px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("P" + (i + 1), px, py - 20);
+        }
     }
 }
 
@@ -160,10 +175,10 @@ function initCanvas() {
     const diceBtn = document.getElementById('dice-roll');
     diceBtn.addEventListener('click', () => {
         const de = Math.floor(Math.random() * 6) + 1;
-        alert("Tu as fait un " + de + " !");
-        playerPosition = (playerPosition + de) % nbCercles;
+        alert("Joueur " + (currentPlayer + 1) + " a fait un " + de + " !");
+        playerPositions[currentPlayer] = (playerPositions[currentPlayer] + de) % nbCercles;
         redrawAll();
-        const couleurCase = questions[playerPosition];
+        const couleurCase = questions[playerPositions[currentPlayer]];
         gererArriveeSurCase(couleurCase);
     });
     window.addEventListener("resize", () => {
