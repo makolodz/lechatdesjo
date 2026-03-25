@@ -34,7 +34,7 @@ function generateQuestions() {
         return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    const available = ["red", "green", "blue", "pink", "cyan"];
+    const available = ["red", "green", "blue", "yellow", "black"];
 
     for (let i = 0; i < nbCercles; i++) {
         questions[i] = getRandomElement(available);
@@ -131,8 +131,8 @@ function drawCircles() {
 
         ctx.beginPath();
         ctx.arc(x, y, circleRadius, 0, 2 * Math.PI);
-        ctx.fillStyle = questions[i];
-        ctx.fill();
+        ctx.strokeStyle = questions[i];
+        ctx.stroke();
     }
 }
 
@@ -142,10 +142,73 @@ function drawPawn() {
     }
 }
 
+// draw olympic rings => 5 anneaux grisés + couleurs de l'anneau quand obtenu.
+
+function drawOlympicLogo() {
+    objet = {
+        red: true,
+        green: true,
+        blue : false,
+        yellow: false,
+        black: true,
+    }
+
+    if (objet.red) {
+        ctx.strokeStyle = "red";
+    } else {
+        ctx.strokeStyle = "grey";
+    }
+
+    ctx.beginPath();
+    ctx.arc(canvas.width/2+100, canvas.height/2-25, circleRadius+10, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    if (objet.green) {
+        ctx.strokeStyle = "green";
+    } else {
+        ctx.strokeStyle = "grey";
+    }
+
+    ctx.beginPath();
+    ctx.arc(canvas.width/2-100, canvas.height/2-25, circleRadius+10, 0, 2 * Math.PI);
+    ctx.stroke();
+    
+    if (objet.blue) {
+        ctx.strokeStyle = "blue";
+    } else {
+        ctx.strokeStyle = "grey";
+    }
+
+    ctx.beginPath();
+    ctx.arc(canvas.width/2-50, canvas.height/2+25, circleRadius+10, 0, 2 * Math.PI);
+    ctx.stroke();    
+    
+    if (objet.yellow) {
+        ctx.strokeStyle = "yellow";
+    } else {
+        ctx.strokeStyle = "grey";
+    }
+
+    ctx.beginPath();
+    ctx.arc(canvas.width/2+50, canvas.height/2+25, circleRadius+10, 0, 2 * Math.PI);
+    ctx.stroke();    
+    
+    if (objet.black) {
+        ctx.strokeStyle = "black";
+    } else {
+        ctx.strokeStyle = "grey";
+    }
+
+    ctx.beginPath();
+    ctx.arc(canvas.width/2, canvas.height/2-25, circleRadius+10, 0, 2 * Math.PI);
+    ctx.stroke();
+}
+
 function redrawAll() {
     drawIceRink();
     drawCircles();
     drawPawn();
+    drawOlympicLogo();
 }
 
 function init() {
